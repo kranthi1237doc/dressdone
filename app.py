@@ -66,7 +66,7 @@ if st.button("✨ Run AI Try-On & Calculate Meterage", type="primary"):
     else:
         with st.spinner(f"Connecting to AI pipeline to fit your {dress_style} onto the client avatar..."):
             try:
-                # Save uploaded files temporarily for processing
+                # Save uploaded files temporarily as local paths
                 temp_fabric_path = "temp_fabric.jpg"
                 temp_model_path = "temp_model.jpg"
                 
@@ -75,11 +75,11 @@ if st.button("✨ Run AI Try-On & Calculate Meterage", type="primary"):
                 with open(temp_model_path, "wb") as f:
                     f.write(model_file.getbuffer())
                 
-                # Connect to open-source Virtual Try-On model space, passing the selected dress style description
+                # Connect to open-source Virtual Try-On model space using file path strings
                 client = Client("yisol/IDM-VTON")
                 result = client.predict(
-                    dict={"background": open(temp_model_path, "rb"), "layers": [], "composite": None},
-                    garm_img=open(temp_fabric_path, "rb"),
+                    dict={"background": temp_model_path, "layers": [], "composite": None},
+                    garm_img=temp_fabric_path,
                     garment_des=f"A custom-tailored {dress_style} made for {target_gender}",
                     is_checked=True,
                     is_checked_crop=False,
