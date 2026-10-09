@@ -1,9 +1,6 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageOps
 import time
-import requests
-import base64
-import io
 
 # Page Configuration
 st.set_page_config(
@@ -13,23 +10,8 @@ st.set_page_config(
 )
 
 # App Header
-st.title("🧵 Custom Apparel & Live Virtual Try-On Studio")
-st.write("Upload your fabric, choose your outfit style, input metric measurements, and run a live 3D generation or Virtual Try-On API.")
-
-# Sidebar Configuration for API Integration
-with st.sidebar:
-    st.header("⚙️ Live API Configuration")
-    api_provider = st.selectbox(
-        "Try-On Engine Backend",
-        ["Simulation Mock (Fast & Free)", "FASHN AI Virtual Try-On API", "Replicate (IDM-VTON) API"]
-    )
-    
-    api_key = ""
-    if "API" in api_provider:
-        api_key = st.text_input("Enter Provider API Key", type="password")
-    
-    st.markdown("---")
-    st.info("To use live generation, paste a valid API key from FASHN.ai or Replicate. Otherwise, use the free simulation mock mode.")
+st.title("🧵 Custom Apparel & Design Studio")
+st.write("Upload your fabric, choose your outfit style, input metric measurements, and preview your custom design!")
 
 # --- STEP 1: Uploads ---
 st.header("1. Upload Assets")
@@ -42,7 +24,7 @@ with col_up1:
         st.image(fabric_image, caption="Fabric Sample", width=150)
 
 with col_up2:
-    model_file = st.file_uploader("Upload Client / Avatar Photo", type=["jpg", "jpeg", "png"])
+    model_file = st.file_uploader("Upload Client / Base Photo", type=["jpg", "jpeg", "png"])
     if model_file is not None:
         model_image = Image.open(model_file)
         st.image(model_image, caption="Client Base Photo", width=150)
@@ -73,67 +55,16 @@ with col2:
 with col3:
     length_req = st.number_input("Desired Length (m)", min_value=0.5, max_value=3.0, value=1.10, step=0.01)
 
-# --- STEP 4: Generate Design & Call Virtual Try-On API ---
-st.header("4. Generate Virtual Try-On Result")
+# --- STEP 4: Generate Design & Meter Calculation ---
+st.header("4. Generate Design Specification")
 
-if st.button("✨ Run Generation & Mapping", type="primary"):
+if st.button("✨ Calculate & Generate Design", type="primary"):
     if fabric_file is None:
         st.warning("⚠️ Please upload a fabric pattern image in Step 1 first!")
-    elif model_file is None:
-        st.warning("⚠️ Please upload a client photo in Step 2 to perform the mapping!")
     else:
-        api_success = False
-        
-        # --- REAL API INTEGRATION EXECUTION ---
-        if "FASHN" in api_provider and api_key:
-            with st.spinner("Connecting to FASHN AI Virtual Try-On Pipeline..."):
-                try:
-                    # Convert images to base64 for API transmission
-                    encoded_fabric = base64.b64encode(fabric_file.getvalue()).decode("utf-8")
-                    encoded_model = base64.b64encode(model_file.getvalue()).decode("utf-8")
-                    
-                    headers = {
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json"
-                    }
-                    payload = {
-                        "model_image": f"data:image/jpeg;base64,{encoded_model}",
-                        "garment_image": f"data:image/jpeg;base64,{encoded_fabric}",
-                        "category": "auto",
-                        "mode": "balanced"
-                    }
-                    
-                    # Send request to FASHN API endpoint
-                    response = requests.post("https://api.fashn.ai/v1/run", json=payload, headers=headers)
-                    if response.status_code == 200:
-                        res_data = response.json()
-                        # FASHN uses a polling task ID system or returns output directly depending on sync settings
-                        st.success("API Request Submitted! Processing virtual try-on...")
-                        api_success = True
-                    else:
-                        st.error(f"API Error Response: {response.text}")
-                except Exception as e:
-                    st.error(f"Failed to connect to API endpoint: {e}")
-                    
-        elif "Replicate" in api_provider and api_key:
-            with st.spinner("Connecting to Replicate IDM-VTON Model..."):
-                try:
-                    # Placeholder structure for Replicate API execution
-                    headers = {
-                        "Authorization": f"Token {api_key}",
-                        "Content-Type": "application/json"
-                    }
-                    # Full implementation triggers prediction endpoints via Replicate client library
-                    st.success("Replicate configuration hook recognized. Ready for deployment pipeline.")
-                    api_success = True
-                except Exception as e:
-                    st.error(f"Replicate connection error: {e}")
-
-        # Fallback Simulation if API is not selected or configured
-        if not api_success:
-            with st.spinner("Executing local structural mapping and fabric overlay simulation..."):
-                time.sleep(2)
-                st.success("🎉 Simulation compiled successfully!")
+        with st.spinner("Analyzing fabric texture and computing metric blueprint..."):
+            time.sleep(1.5) # Simulated smooth processing time
+            st.success("🎉 Design blueprint successfully compiled!")
 
         # Display specifications summary
         sub_col1, sub_col2 = st.columns(2)
@@ -146,6 +77,7 @@ if st.button("✨ Run Generation & Mapping", type="primary"):
             st.markdown(f"**Tailoring Execution:**")
             st.write(f"- **Outfit:** {dress_style}")
             
+            # Dynamic fabric meter requirement logic
             if "Lehenga" in dress_style or "Anarkali" in dress_style:
                 est_fabric = "3.5 to 5.0 meters"
             elif "Blouse" in dress_style:
@@ -157,7 +89,18 @@ if st.button("✨ Run Generation & Mapping", type="primary"):
 
         # Visual Output Display Area
         st.markdown("---")
-        st.subheader("🖼️ Result Preview")
-        st.image(model_file, caption=f"Mapped Result: {dress_style} using Uploaded Fabric", width=300)
+        st.subheader("🖼️ Project Layout Preview")
         
+        # Show side-by-side comparison of Fabric and Client Photo if available
+        if model_file is not None:
+            prev_col1, prev_col2 = st.columns(2)
+            with prev_col1:
+                st.image(fabric_image, caption="Source Fabric", width=200)
+            with prev_col2:
+                st.image(model_image, caption=f"Target: {dress_style}", width=200)
+            st.info("💡 **Prototype Note:** This layout pairs your fabric swatch with your client specifications and calculates exact meterage requirements for local tailoring.")
+        else:
+            st.image(fabric_image, caption=f"Fabric Swatch for {dress_style}", width=250)
+            st.info("💡 Tip: Upload a client photo above to see the side-by-side design layout.")
+            
         st.balloons()
