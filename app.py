@@ -1,113 +1,111 @@
 import streamlit as st
 from PIL import Image
-import random
+import time
 
 # Page Configuration
 st.set_page_config(
-    page_title="Custom Dress Designer MVP", 
-    page_icon="👗", 
+    page_title="Custom Indian & Western Dress Designer", 
+    page_icon="🧵", 
     layout="centered"
 )
 
 # App Header
-st.title("👗 AI Custom Dress Designer")
-st.write("Upload a photo of your fabric, input your measurements, and generate your custom design concept!")
-
-# Sidebar for settings & API placeholders
-with st.sidebar:
-    st.header("⚙️ Configuration")
-    ai_mode = st.selectbox(
-        "Rendering Engine",
-        ["Simulation Mock (Fast & Free)", "OpenAI DALL-E (Requires API Key)"]
-    )
-    
-    openai_key = ""
-    if "OpenAI" in ai_mode:
-        openai_key = st.text_input("Enter OpenAI API Key", type="password")
-    
-    st.markdown("---")
-    st.markdown("### About")
-    st.info("This is a fun open-source prototype designed to test fabric-to-garment concepts before professional development.")
+st.title("🧵 Custom Apparel & Fabric Designer (AI MVP)")
+st.write("Upload your fabric, select Indian or Western styles, enter your measurements, and calculate fabric requirements in meters!")
 
 # --- STEP 1: Fabric Upload ---
 st.header("1. Upload Your Fabric")
-fabric_file = st.file_uploader("Choose a fabric image file", type=["jpg", "jpeg", "png"])
+fabric_file = st.file_uploader("Choose a fabric image file (cotton, silk, brocade, etc.)", type=["jpg", "jpeg", "png"])
 
 if fabric_file is not None:
     fabric_image = Image.open(fabric_file)
     st.image(fabric_image, caption="Uploaded Fabric Sample", width=250)
 
-# --- STEP 2: Body Measurements ---
-st.header("2. Enter Your Measurements")
+# --- STEP 2: Category & Style Selection ---
+st.header("2. Choose Category & Garment Style")
+target_gender = st.radio("Select Target Collection:", ["Women's Wear", "Men's Wear"], horizontal=True)
+
+if target_gender == "Women's Wear":
+    dress_style = st.selectbox(
+        "Select Traditional/Modern Style:",
+        [
+            "Designer Blouse (Saree)", 
+            "Lehenga Choli Set", 
+            "Salwar Kameez Suit", 
+            "Anarkali Dress",
+            "Western A-Line Midi"
+        ]
+    )
+else:
+    dress_style = st.selectbox(
+        "Select Shirt Style:",
+        [
+            "Classic Formal Shirt", 
+            "Casual Printed Shirt", 
+            "Mandarin Collar (Nehru) Shirt", 
+            "Festive Kurta Shirt"
+        ]
+    )
+
+# --- STEP 3: Body Measurements (in Meters / Centimeters) ---
+st.header("3. Enter Your Measurements (in Meters)")
+st.write("Tip: You can input values like 0.85m for chest/bust layout sizing or standard metric lengths.")
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    bust = st.number_input("Bust (inches)", min_value=0.0, value=34.0, step=0.5)
+    chest_bust = st.number_input("Chest / Bust (m)", min_value=0.5, max_value=2.0, value=0.90, step=0.01)
 with col2:
-    waist = st.number_input("Waist (inches)", min_value=0.0, value=26.0, step=0.5)
+    waist = st.number_input("Waist (m)", min_value=0.4, max_value=2.0, value=0.75, step=0.01)
 with col3:
-    hips = st.number_input("Hips (inches)", min_value=0.0, value=36.0, step=0.5)
+    length_req = st.number_input("Desired Garment Length (m)", min_value=0.5, max_value=3.0, value=1.10, step=0.01)
 
-height = st.slider("Height (cm)", min_value=140, max_value=200, value=165)
+height = st.slider("Total Height (cm)", min_value=140, max_value=200, value=165)
 
-# --- STEP 3: Dress Style Selection ---
-st.header("3. Choose Dress Style")
-dress_style = st.selectbox(
-    "Select a silhouette:",
-    [
-        "A-Line Midi Dress", 
-        "Wrap Dress", 
-        "Ballgown", 
-        "Slip Dress", 
-        "Mermaid Evening Gown",
-        "Boho Maxi Dress"
-    ]
-)
+# --- STEP 4: Generate Design Concept & Fabric Meter Output ---
+st.header("4. Generate Specification & Output")
 
-# Additional Customizations
-details = st.multiselect(
-    "Design Accents:",
-    ["V-Neck", "High Collar", "Ruffled Hem", "Long Sleeves", "Puff Sleeves", "Belted Waist"]
-)
-
-# --- STEP 4: Generate Design Concept ---
-st.header("4. Generate Preview")
-
-if st.button("✨ Design My Custom Dress", type="primary"):
+if st.button("✨ Calculate & Generate Concept", type="primary"):
     if fabric_file is None:
         st.warning("⚠️ Please upload a fabric image sample in Step 1 first!")
     else:
-        with st.spinner("Analyzing fabric texture and rendering garment on custom proportions..."):
+        with st.spinner("Processing fabric drape and calculating technical meter requirements..."):
+            time.sleep(1.5) # Simulating AI calculation
             
-            # Placeholder generation process simulation
-            import time
-            time.sleep(2) 
-            
-            st.success("🎉 Design successfully generated!")
+            st.success("🎉 Specification successfully compiled!")
             
             # Display summary layout
-            st.subheader(f"Custom Design: {dress_style}")
+            st.subheader(f"Custom Design Blueprint: {dress_style}")
             
             summary_col1, summary_col2 = st.columns(2)
             with summary_col1:
-                st.markdown(f"**Profile Specifications:**")
-                st.write(f"- **Bust:** {bust}\"")
-                st.write(f"- **Waist:** {waist}\"")
-                st.write(f"- **Hips:** {hips}\"")
+                st.markdown(f"**Client Metrics:**")
+                st.write(f"- **Chest/Bust:** {chest_bust} meters")
+                st.write(f"- **Waist:** {waist} meters")
+                st.write(f"- **Garment Length:** {length_req} meters")
                 st.write(f"- **Height:** {height} cm")
             with summary_col2:
-                st.markdown(f"**Garment Build:**")
-                st.write(f"- **Silhouette:** {dress_style}")
-                st.write(f"- **Accents:** {', '.join(details) if details else 'Standard Classic'}")
-                st.write(f"- **Estimated Fabric Needed:** ~2.5 Yards")
+                st.markdown(f"**Tailoring Execution:**")
+                st.write(f"- **Category:** {target_gender}")
+                st.write(f"- **Selected Outfit:** {dress_style}")
+                
+                # Logic for estimating total fabric needed in meters based on style
+                if "Lehenga" in dress_style or "Anarkali" in dress_style:
+                    est_fabric = "3.5 to 5.0 meters"
+                elif "Blouse" in dress_style:
+                    est_fabric = "0.8 to 1.2 meters"
+                else:
+                    est_fabric = "2.2 to 2.8 meters"
+                    
+                st.write(f"- **Total Fabric Required:** ~{est_fabric}")
 
             # Visual representation container
             st.markdown("---")
             st.info(
-                "💡 **Next Step for Production:** In a fully scaled professional version, "
-                "this view connects to a diffusion model or 3D CLO engine to map your exact uploaded "
-                "fabric pattern onto a personalized 3D avatar wireframe."
+                "💡 **3D Generation Integration Note:** For a professional production build, "
+                "this script can be linked via API to open-source cloth simulation pipelines or "
+                "3D virtual try-on models (such as advanced diffusion workflows or CLO-based APIs) "
+                "to wrap your uploaded fabric pattern directly onto a custom-proportioned avatar."
             )
             
-            # Celebration UI element
             st.balloons()
